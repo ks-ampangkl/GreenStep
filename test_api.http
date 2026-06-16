@@ -1,63 +1,33 @@
-###Test 1###
-GET http://localhost:8000/
-
-
-###Test 2 — Fetch Dashboard Aggregations ###
-GET http://localhost:8000/api/dashboard
-
-{
-  "panels": {
-    "today_emissions_kg": 14.25,
-    "weekly_total_kg": 92.4,
-    "monthly_average_kg": 385.0,
-    "eco_points": {
-      "current_total": 1240,
-      "gained_today": 80
-    }
-  },
-  "charts": {
-    "today_breakdown": { "transport": 6.3, "food": 6.7, "energy": 1.25 },
-    "weekly_history_graph": [  {"day": "Monday", "emissions_kg": 15.2}, "..." ]
-  },
-  "todays_tip": { "id": 2, "labels": ["All Tips", "Food"], "title": "Meatless Mondays", "..." },
-  "active_challenge": { "id": 101, "title": "Green Commute Race", "..." }
-}
-
-
-###Test 4 — Post / Log an Activity###
-POST http://localhost:8000/api/activities/log
-Content-Type: application/json
-
-{ 
-  "activity_type_id": 1, 
-  "amount": 25.0, 
-  "date": "2026-06-15" 
-}
-
-
-###Test 5 — Validation Errors###
-POST http://localhost:8000/api/activities/log
-Content-Type: application/json
-
-{ 
-  "amount": 50.0
-}
-
-
-###Test 6 — Create a Community Challenge###
-POST http://localhost:8000/api/challenges
-Content-Type: application/json
-
-{ 
-  "title": "Unplug This Weekend", 
-  "description": "Turn off unused electronics at home to collectively reduce grid load.", 
-  "target_type": "Energy" 
-}
-
-
-###Test 7 — Reset Seed Data (Demo Environment Mode)###
+###Environment & Database Seeding Setup###
 POST http://localhost:8000/api/reset
 
+
+### Test 2: Fetch Primary Dashboard Aggregation Feed
+GET http://localhost:8000/api/dashboard HTTP/1.1
+Accept: application/json
+User-Agent: GreenStepTestClient/1.0
+
+
+###Activity Type Coefficients Directory###
+GET http://localhost:8000/api/activities/types
+
+
+###Post a Carbon Footprint Activity Log (Success State)###
+POST http://localhost:8000/api/activities/log
+Content-Type: application/json
+Accept: application/json
+
 {
-  "message": "Application metrics reset to baseline arrays successfully"
+  "activity_type_id": 5,
+  "amount": 2,
+  "date": "2026-06-16"
+}
+
+
+###Validation Rules: Missing Log Payload Attributes###
+POST http://localhost:8000/api/activities/log
+Content-Type: application/json
+
+{
+  "amount": 10
 }

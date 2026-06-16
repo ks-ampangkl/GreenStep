@@ -1,52 +1,75 @@
 <?php
-use Slim\Routing\RouteCollectorProxy;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\App;
 use App\Controllers\ActivityController;
+use App\Repositories\ActivityRepository;
+use App\Repositories\ChallengeRepository;
+use App\Repositories\TipRepository;
+use App\Repositories\UserRepository;
+use App\Repositories\GoalRepository;
+use App\Database;
 
-return function ($app) {
+return function (App $app) {
 
-    // 1. Root Handshake Endpoint (Updated for GreenStep Context)
-    $app->get('/', function (Request $req, Response $res) { 
-        $res->getBody()->write(json_encode([ 
-            'name'    => 'GreenStep REST API', 
-            'version' => '1.0.0', 
-            'status'  => 'Healthy'
-        ])); 
-        return $res->withHeader('Content-Type', 'application/json; charset=utf-8'); 
-    }); 
-  
-    // 2. Core API Endpoint Collections
-    $app->group('/api', function (RouteCollectorProxy $g) { 
-        
-        // --- DASHBOARD PAGE ---
-        // Delivers today's balance, breakdown charts, weekly graph datasets, active tip, and active challenge
-        $g->get('/dashboard', [ActivityController::class, 'getDashboardSummary']); 
-        
-        // --- LOG ACTIVITY PAGE ---
-        // Retrieves the 9 operational carbon factor options (e.g., Car - 0.21kg/km)
-        $g->get('/activities/types', [ActivityController::class, 'getActivityTypes']); 
-        // Posts active metrics (amount driven, date, etc.) to mutate daily footprint stats
-        $g->post('/activities/log', [ActivityController::class, 'logActivity']); 
-        // Fetches logs explicitly recorded for the current single date context
-        $g->get('/activities/today', [ActivityController::class, 'getTodayLogs']); 
+    // 1. Initialize the shared Controller Factory using a closure routine
+    $getController = function(): ActivityController {
+        // Fetch the secure global singleton PDO handle
+        $pdo = Database::get();
 
-        // --- MY HISTORY PAGE ---
-        // Returns chronological historically logged entries grouped by calendar day
-        $g->get('/activities/history', [ActivityController::class, 'getHistory']); 
+        // Instantiate individual domain repositories injecting the database connection handle
+        $activityRepo  = new ActivityRepository($pdo);
+        $challengeRepo = new ChallengeRepository($pdo);
+        $tipRepo       = new TipRepository($pdo);
+        $userRepo      = new UserRepository($pdo);
+        $goalRepo      = new GoalRepository($pdo);
 
-        // --- CHALLENGES PAGE ---
-        // Gets entries; supports frontend client filter strings via URL queries: ?filter=joined
-        $g->get('/challenges', [ActivityController::class, 'getChallenges']); 
-        // Registers custom challenges submitted via your "Create a Challenge" form
-        $g->post('/challenges', [ActivityController::class, 'createChallenge']); 
+        // Inject the complete repository collection cluster straight into the Controller constructor
+        return new ActivityController(
+            $activityRepo,
+            $challengeRepo,
+            $tipRepo,
+            $userRepo,
+            $goalRepo
+        );
+    };
 
-        // --- TIP LIBRARY PAGE ---
-        // Returns the list of tips; filters seamlessly via category tabs: ?category=Food
-        $g->get('/tips', [ActivityController::class, 'getTips']); 
+    /* ---------- CORE SYSTEM DASHBOARD AGGREGATIONS ---------- */
+    $app->get('/api/dashboard', function ($request, $response) use ($getController) {
+        return $getController()->getDashboardSummary($request, $response);
+    });
 
-        // --- GLOBAL ADMIN / DEMO RESET ---
-        // Restores json files back to the baseline seed data array instantly
-        $g->post('/reset', [ActivityController::class, 'reset']); 
-    }); 
+    /* ---------- CARBON LOGGING ENGINE & TRACKING SYSTEMS ---------- */
+    $app->get('/api/activities/types', function ($request, $response) use ($getController) {
+        return $getController()->getActivityTypes($request, $response);
+    });
+
+    $app->post('/api/activities/log', function ($request, $response) use ($getController) {
+        return $getController()->logActivity($request, $response);
+    });
+
+    $app->get('/api/activities/today', function ($request, $response) use ($getController) {
+        return $getController()->getTodayLogs($request, $response);
+    });
+
+    $app->get('/api/activities/history', function ($request, $response) use ($getController) {
+        return $getController()->getHistory($request, $response);
+    });
+
+    /* ---------- COMMUNITY CHALLENGES TAB INTERACTIONS ---------- */
+    $app->get('/api/challenges', function ($request, $response) use ($getController) {
+        return $getController()->getChallenges($request, $response);
+    });
+
+    $app->post('/api/challenges', function ($request, $response) use ($getController) {
+        return $getController()->createChallenge($request, $response);
+    });
+
+    /* ---------- INTEGRATED ECO-LIFESTYLE TIPS MATRIX ---------- */
+    $app->get('/api/tips', function ($request, $response) use ($getController) {
+        return $getController()->getTips($request, $response);
+    });
+
+    /* ---------- SYSTEM MANAGEMENT & DEMO ENVIRONMENT RESETS ---------- */
+    $app->post('/api/reset', function ($request, $response) use ($getController) {
+        return $getController()->reset($request, $response);
+    });
 };
