@@ -1,75 +1,103 @@
 <?php
 use Slim\App;
 use App\Controllers\ActivityController;
+use App\Controllers\AuthController;
+use App\Controllers\FriendController;
+use App\Controllers\GoalController;
+use App\Controllers\EcoPhotoController;
 use App\Repositories\ActivityRepository;
 use App\Repositories\ChallengeRepository;
 use App\Repositories\TipRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\GoalRepository;
+use App\Auth\JwtService;
+use App\Middleware\AuthMiddleware;
 use App\Database;
 
 return function (App $app) {
 
-    // 1. Initialize the shared Controller Factory using a closure routine
-    $getController = function(): ActivityController {
-        // Fetch the secure global singleton PDO handle
-        $pdo = Database::get();
+    // -------------------------------------------------------------------------
+    // 1. Build shared dependencies
+    // -------------------------------------------------------------------------
+    $pdo  = Database::get();
+    $jwt  = new JwtService();
+    $auth = new AuthMiddleware($jwt);
 
-        // Instantiate individual domain repositories injecting the database connection handle
-        $activityRepo  = new ActivityRepository($pdo);
-        $challengeRepo = new ChallengeRepository($pdo);
-        $tipRepo       = new TipRepository($pdo);
-        $userRepo      = new UserRepository($pdo);
-        $goalRepo      = new GoalRepository($pdo);
+    $activityRepo  = new ActivityRepository($pdo);
+    $challengeRepo = new ChallengeRepository($pdo);
+    $tipRepo       = new TipRepository($pdo);
+    $userRepo      = new UserRepository($pdo);
+    $goalRepo      = new GoalRepository($pdo);
 
-        // Inject the complete repository collection cluster straight into the Controller constructor
-        return new ActivityController(
-            $activityRepo,
-            $challengeRepo,
-            $tipRepo,
-            $userRepo,
-            $goalRepo
-        );
-    };
+    $activityCtrl = new ActivityController(
+        $activityRepo,
+        $challengeRepo,
+        $tipRepo,
+        $userRepo,
+        $goalRepo
+    );
 
-    /* ---------- CORE SYSTEM DASHBOARD AGGREGATIONS ---------- */
-    $app->get('/api/dashboard', function ($request, $response) use ($getController) {
-        return $getController()->getDashboardSummary($request, $response);
-    });
+    $authCtrl     = new AuthController($userRepo, $jwt);
+    $friendCtrl   = new FriendController($userRepo);
+    $goalCtrl     = new GoalController($goalRepo);
+    $ecoPhotoCtrl = new EcoPhotoController($goalRepo, $userRepo);
 
-    /* ---------- CARBON LOGGING ENGINE & TRACKING SYSTEMS ---------- */
-    $app->get('/api/activities/types', function ($request, $response) use ($getController) {
-        return $getController()->getActivityTypes($request, $response);
-    });
+    // -------------------------------------------------------------------------
+    // 2. Public auth routes
+    // -------------------------------------------------------------------------
+    $app->post('/auth/register', [$authCtrl, 'register']);
+    $app->post('/auth/login',    [$authCtrl, 'login']);
 
-    $app->post('/api/activities/log', function ($request, $response) use ($getController) {
-        return $getController()->logActivity($request, $response);
-    });
+    // -------------------------------------------------------------------------
+    // 3. Public read-only routes (no token required)
+    // -------------------------------------------------------------------------
+    $app->get('/api/activities/types', [$activityCtrl, 'getActivityTypes']);
+    $app->get('/api/tips',             [$activityCtrl, 'getTips']);
 
-    $app->get('/api/activities/today', function ($request, $response) use ($getController) {
-        return $getController()->getTodayLogs($request, $response);
-    });
+    // -------------------------------------------------------------------------
+    // 4. Protected route — requires valid JWT
+    // -------------------------------------------------------------------------
+    $app->get('/auth/me', [$authCtrl, 'me'])->add($auth);
 
-    $app->get('/api/activities/history', function ($request, $response) use ($getController) {
-        return $getController()->getHistory($request, $response);
-    });
+    // -------------------------------------------------------------------------
+    // 5. Protected routes — requires valid JWT
+    // -------------------------------------------------------------------------
+    $app->group('/api', function ($g) use ($activityCtrl, $friendCtrl, $goalCtrl, $ecoPhotoCtrl) {
 
-    /* ---------- COMMUNITY CHALLENGES TAB INTERACTIONS ---------- */
-    $app->get('/api/challenges', function ($request, $response) use ($getController) {
-        return $getController()->getChallenges($request, $response);
-    });
+        /* --- Dashboard --- */
+        $g->get('/dashboard', [$activityCtrl, 'getDashboardSummary']);
 
-    $app->post('/api/challenges', function ($request, $response) use ($getController) {
-        return $getController()->createChallenge($request, $response);
-    });
+        /* --- Activities --- */
+        $g->get('/activities/today',   [$activityCtrl, 'getTodayLogs']);
+        $g->get('/activities/history', [$activityCtrl, 'getHistory']);
+        $g->post('/activities/log',    [$activityCtrl, 'logActivity']);
 
-    /* ---------- INTEGRATED ECO-LIFESTYLE TIPS MATRIX ---------- */
-    $app->get('/api/tips', function ($request, $response) use ($getController) {
-        return $getController()->getTips($request, $response);
-    });
+        /* --- Challenges --- */
+        $g->get('/challenges',            [$activityCtrl, 'getChallenges']);
+        $g->post('/challenges',           [$activityCtrl, 'createChallenge']);
+        $g->delete('/challenges/{id}',    [$activityCtrl, 'deleteChallenge']);
+        $g->post('/challenges/{id}/join', [$activityCtrl, 'joinChallenge']);
 
-    /* ---------- SYSTEM MANAGEMENT & DEMO ENVIRONMENT RESETS ---------- */
-    $app->post('/api/reset', function ($request, $response) use ($getController) {
-        return $getController()->reset($request, $response);
-    });
+        /* --- Friends --- */
+        $g->get('/friends',              [$friendCtrl, 'getFriends']);
+        $g->get('/friends/requests',     [$friendCtrl, 'getPendingRequests']);
+        $g->post('/friends/request',     [$friendCtrl, 'sendRequest']);
+        $g->post('/friends/accept/{id}', [$friendCtrl, 'acceptRequest']);
+        $g->post('/friends/reject/{id}', [$friendCtrl, 'rejectRequest']);
+
+        /* --- Leaderboard --- */
+        $g->get('/leaderboard', [$activityCtrl, 'getLeaderboard']);
+
+        /* --- Goals --- */
+        $g->get('/goals',  [$goalCtrl, 'getGoal']);
+        $g->post('/goals', [$goalCtrl, 'setGoal']);
+
+        /* --- Eco Photos --- */
+        $g->get('/photos',  [$ecoPhotoCtrl, 'getPhotos']);
+        $g->post('/photos', [$ecoPhotoCtrl, 'uploadPhoto']);
+
+        /* --- System --- */
+        $g->post('/reset', [$activityCtrl, 'reset']);
+
+    })->add($auth);
 };
