@@ -24,6 +24,8 @@
 #   }
 # }
 # ============================================================
+
+###
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
@@ -449,7 +451,7 @@ Content-Type: application/json
 
 # Reject tester sends request to Demo Member (205)
 POST {{baseUrl}}/api/friends/request
-Authorization: Bearer {{rejectToken}}
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjo0LCJpYXQiOjE3ODE5MzA0MTYsImV4cCI6MTc4MTkzNDAxNiwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoicmVqZWN0QGdyZWVuc3RlcC50ZXN0In0.lmlRN3DpSgdit4fc-VgJbe57YVyj3GicJLdPzXx-4-A
 Content-Type: application/json
 
 {
@@ -689,16 +691,42 @@ Content-Type: application/json
 ###
 # Join a challenge (expect 200)
 POST {{baseUrl}}/api/challenges/1/join
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTgzNzQ0MywiZXhwIjoxNzgxODQxMDQzLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ._tnRm7j6sveWOUTc1TFGQSbQsqW9ings0VQUhuv49rY
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
 
 ###
 
 # Join same challenge again (expect 409)
 POST {{baseUrl}}/api/challenges/1/join
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTgzNzQ0MywiZXhwIjoxNzgxODQxMDQzLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ._tnRm7j6sveWOUTc1TFGQSbQsqW9ings0VQUhuv49rY
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
 
 ###
 
 # Join non-existent challenge (expect 404)
 POST {{baseUrl}}/api/challenges/999/join
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
+
+
+###
+POST {{baseUrl}}/api/photos
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
+Content-Type: application/json
+
+{
+    "image_url": "https://example.com/photo2.jpg",
+    "achievement": "Went vegan for a week!"
+}
+
+
+###
+GET {{baseUrl}}/api/leaderboard
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTgzNzQ0MywiZXhwIjoxNzgxODQxMDQzLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ._tnRm7j6sveWOUTc1TFGQSbQsqW9ings0VQUhuv49rY
+
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
