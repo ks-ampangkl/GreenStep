@@ -14,6 +14,17 @@ Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 // 3. Instantiate Slim App
 $app = AppFactory::create();
 
+// changed code to allow CORS preflight requests
+$app->options(
+
+'/{routes:.+}',
+
+function ($request,$response)
+{
+    return $response;
+}
+);
+
 // 4. Explicitly load middleware files manually to bypass Composer autoloader bugs
 require_once __DIR__ . '/../src/Middleware/JsonBodyParser.php';
 require_once __DIR__ . '/../src/Middleware/Cors.php';
