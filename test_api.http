@@ -59,7 +59,6 @@ Content-Type: application/json
 }
 
 ###
-
 # ============================================================
 # TEST 3 — Register duplicate email
 # ============================================================
@@ -104,8 +103,8 @@ Content-Type: application/json
 # ============================================================
 # SET THIS after running Test 4
 # ============================================================
-@memberToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4Mjk2OCwiZXhwIjoxNzgxNjg2NTY4LCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.v2aVQSPBRJzW5cwHhLkOMOBiO6BSroDcKgLcGM65nfM
-
+####
+@memberToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDgsImlhdCI6MTc4MjM2MjQwNCwiZXhwIjoxNzgyMzY2MDA0LCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ._ypJqjbZ5H2EqeW0mS3pnndvpEBWHZqNUyKykD2Zv4k
 ###
 
 # ============================================================
@@ -273,7 +272,7 @@ Content-Type: application/json
 # ============================================================
 # SET THIS after running Bonus Test B
 # ============================================================
-@adminToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDQsImlhdCI6MTc4MTY2NzM4NiwiZXhwIjoxNzgxNjcwOTg2LCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdyZWVuc3RlcC50ZXN0In0.UF2DUKK0Ur_AX7myPQA7DcocQgl9H1eNdvd0G4UGtUQ
+@adminToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDcsImlhdCI6MTc4MjM2MjMwMiwiZXhwIjoxNzgyMzY1OTAyLCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdyZWVuc3RlcC50ZXN0In0.CUyPyokZI_V9ouOvJqzfFuOg3XQCgURR1y_4Nqh5F0o
 
 ###
 
@@ -303,7 +302,7 @@ Content-Type: application/json
 
 ###
 
-@adminToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDQsImlhdCI6MTc4MTY4Mzc4OSwiZXhwIjoxNzgxNjg3Mzg5LCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdyZWVuc3RlcC50ZXN0In0.V5BZ7JbPORDhLkqRBrN2MJ3AQ5LvjMUviC-sXw1O_3Q
+@adminToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDcsImlhdCI6MTc4MjM2MjM0NCwiZXhwIjoxNzgyMzY1OTQ0LCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdyZWVuc3RlcC50ZXN0In0.uDXlrIp9tquMhMEGVd3yflRSWZl3H0oV2m6BeM_33u0
 
 ###
 
@@ -315,7 +314,7 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-    "receiver_id": 205
+    "receiver_id": 206
 }
 
 ###
@@ -730,3 +729,241 @@ Content-Type: application/json
     "email": "member@greenstep.test",
     "password": "password"
 }
+
+###Test 2
+POST http://localhost:8000/auth/login 
+Content-Type: application/json 
+  
+{ 
+    "email":"admin@books.test", 
+    "password":"password" 
+}
+
+
+
+============================================================
+STEP 1 — Login as member to get fresh token
+============================================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+============================================================
+STEP 2 — Check available activity types first
+============================================================
+GET {{baseUrl}}/api/activities/types
+
+============================================================
+STEP 3 — Log a Car (Petrol) activity (activity_type_id: 1)
+10km x 0.21 kg/km = 2.1 kg CO2
+============================================================
+EXPECTED 201:
+{
+"message": "Activity recorded successfully!",
+"logged_item": {
+"activity": "Car (Petrol)",
+"amount": 10,
+"unit": "km",
+"emissions_kg": 2.1
+}
+}
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-20"
+}
+
+============================================================
+STEP 4 — Check today's logs to confirm it was recorded
+============================================================
+EXPECTED 200:
+[ { "activity": "Car (Petrol)", "emissions_kg": 2.1, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer {{memberToken}}
+
+============================================================
+STEP 5 — Check dashboard to see emissions updated
+============================================================
+EXPECTED 200:
+{ "panels": { "today_emissions_kg": 2.1, "eco_points": { "current_total": 15, ... } } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{memberToken}}
+
+///////////////////////////////////////
+============================================================
+STEP 1 — Login as member to get fresh token
+============================================================
+##########
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+============================================================
+STEP 2 — Check available activity types first
+============================================================
+GET {{baseUrl}}/api/activities/types
+
+============================================================
+STEP 3 — Log a Car (Petrol) activity (activity_type_id: 1)
+10km x 0.21 kg/km = 2.1 kg CO2
+============================================================
+EXPECTED 201:
+{
+"message": "Activity recorded successfully!",
+"logged_item": {
+"activity": "Car (Petrol)",
+"amount": 10,
+"unit": "km",
+"emissions_kg": 2.1
+}
+}
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-20"
+}
+
+============================================================
+STEP 4 — Check today's logs to confirm it was recorded
+============================================================
+EXPECTED 200:
+[ { "activity": "Car (Petrol)", "emissions_kg": 2.1, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer {{memberToken}}
+
+============================================================
+STEP 5 — Check dashboard to see emissions updated
+============================================================
+EXPECTED 200:
+{ "panels": { "today_emissions_kg": 2.1, "eco_points": { "current_total": 15, ... } } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{memberToken}}
+
+///////////////////////////////////////////////
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+# ============================================================
+# STEP 1 — Login as member to get fresh token
+# ============================================================
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+###
+
+# ============================================================
+# STEP 2 — Check available activity types first
+# ============================================================
+GET {{baseUrl}}/api/activities/types
+
+###
+
+# ============================================================
+# STEP 3 — Log a Car (Petrol) activity (activity_type_id: 1)
+# 10km x 0.21 kg/km = 2.1 kg CO2
+# ============================================================
+# EXPECTED 201:
+# {
+#   "message": "Activity recorded successfully!",
+#   "logged_item": {
+#     "activity": "Car (Petrol)",
+#     "amount": 10,
+#     "unit": "km",
+#     "emissions_kg": 2.1
+#   }
+# }
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-20"
+}
+
+###
+
+# ============================================================
+# STEP 4 — Check today's logs to confirm it was recorded
+# ============================================================
+# EXPECTED 200:
+# [ { "activity": "Car (Petrol)", "emissions_kg": 2.1, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# STEP 5 — Check dashboard to see emissions updated
+# ============================================================
+# EXPECTED 200:
+# { "panels": { "today_emissions_kg": 2.1, "eco_points": { "current_total": 15, ... } } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{memberToken}}
+
+
+NEVER TOUCH THIS TOKEN BELOW, IT'S FOR TESTING EXPIRED TOKEN SCENARIO
+# ###
+# POST {{baseUrl}}/api/reset
+# Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjo4LCJpYXQiOjE3ODIxMDU1MjYsImV4cCI6MTc4MjEwOTEyNiwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.L2u61yLZzs_uCYhnWZ607xZ_wh1HyiCx2bNJwqGB11E
+
+
+###
+OPTIONS http://localhost:8000/auth/login
+
+###
+OPTIONS /auth/login
+
+###
+GET /api/users/search?q=john
