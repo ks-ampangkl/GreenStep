@@ -104,8 +104,7 @@ Content-Type: application/json
 # SET THIS after running Test 4
 # ============================================================
 ####
-@memberToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDgsImlhdCI6MTc4MjM2MjQwNCwiZXhwIjoxNzgyMzY2MDA0LCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ._ypJqjbZ5H2EqeW0mS3pnndvpEBWHZqNUyKykD2Zv4k
-###
+@memberToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDgsImlhdCI6MTc4MjM2MjUyMSwiZXhwIjoxNzgyMzY2MTIxLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.uR7gJKdzbZHcJkNHCkqe43-uhaD2CYskGoufZ2SsfyA
 
 # ============================================================
 # TEST 5 — Login with wrong password
@@ -314,7 +313,7 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-    "receiver_id": 206
+    "receiver_id": 1
 }
 
 ###
