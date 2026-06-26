@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:8000
-@memberEmail = member@greenstep.test
-@adminEmail = admin@greenstep.test
+@memberEmail = you@greenstep.app
+@adminEmail = admin@greenstep.app
 @password = password
 
 

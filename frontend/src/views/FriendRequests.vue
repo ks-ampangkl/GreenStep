@@ -1,11 +1,18 @@
 <template>
   <h1>Friend Requests</h1>
 
-  <div v-if="requests.length">
+  <div v-if="error" class="error-banner">{{ error }}</div>
+  <div v-if="message" class="success-banner">{{ message }}</div>
+  <div v-if="loading" class="loading-state">Loading requests...</div>
+
+  <div v-else-if="requests.length">
     <div v-for="r in requests" :key="r.id" class="card card-row">
       <div style="display:flex; align-items:center; gap:12px;">
-        <div class="avatar">{{ initials(r.sender_name) }}</div>
-        <h3>{{ r.sender_name }}</h3>
+        <div class="avatar">{{ initials(r.name) }}</div>
+        <div>
+          <h3>{{ r.name }}</h3>
+          <p class="hint-text">{{ r.requested_at }}</p>
+        </div>
       </div>
       <div class="card-actions" style="margin-top:0;">
         <button class="btn-sm" @click="accept(r.id)">Accept</button>
@@ -23,8 +30,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { getRequests, acceptRequest, rejectRequest } from "../api/friend";
+import { apiErrorMessage } from "../api/client";
 
 const requests = ref([]);
+const loading = ref(true);
+const error = ref("");
+const message = ref("");
 
 function initials(name) {
   return (name || "")
@@ -36,18 +47,40 @@ function initials(name) {
 }
 
 async function load() {
-  const res = await getRequests();
-  requests.value = res.data.pending_requests;
+  loading.value = true;
+  error.value = "";
+  try {
+    const res = await getRequests();
+    requests.value = res.data.pending_requests ?? [];
+  } catch (err) {
+    error.value = apiErrorMessage(err, "Could not load friend requests.");
+  } finally {
+    loading.value = false;
+  }
 }
 
 async function accept(id) {
-  await acceptRequest(id);
-  load();
+  error.value = "";
+  message.value = "";
+  try {
+    await acceptRequest(id);
+    message.value = "Friend request accepted.";
+    load();
+  } catch (err) {
+    error.value = apiErrorMessage(err, "Could not accept this request.");
+  }
 }
 
 async function reject(id) {
-  await rejectRequest(id);
-  load();
+  error.value = "";
+  message.value = "";
+  try {
+    await rejectRequest(id);
+    message.value = "Friend request rejected.";
+    load();
+  } catch (err) {
+    error.value = apiErrorMessage(err, "Could not reject this request.");
+  }
 }
 
 onMounted(load);

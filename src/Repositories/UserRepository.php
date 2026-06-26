@@ -248,7 +248,10 @@ final class UserRepository
 
     public function createUserDirect(array $data): void
     {
-        $sql = 'INSERT INTO users (id, name, email, eco_points, gained_today) VALUES (:id, :name, :email, :eco_points, :gained_today)';
+        $data['password_hash'] ??= '$2y$10$uSixnFrjcOkwKP.thvYswezo23rlMSXNEWSYT5uL3b3RIGacXn50e';
+        $data['role'] ??= 'member';
+
+        $sql = 'INSERT INTO users (id, name, email, password_hash, role, eco_points, gained_today) VALUES (:id, :name, :email, :password_hash, :role, :eco_points, :gained_today)';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
     }

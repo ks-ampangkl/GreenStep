@@ -182,16 +182,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getTodayLogs, getHistory } from "../api/activity";
+import { getDashboard, getTodayLogs, getHistory, getLeaderboard } from "../api/activity";
 import { getGoal } from "../api/goal";
 import { getChallenges } from "../api/challenge";
-import client from "../api/client";
 
 const todayActivities = ref([]);
 const history = ref([]);
 const goal = ref(null);
 const challenges = ref([]);
 const leaderboard = ref([]);
+const dashboard = ref(null);
 
 const greeting = computed(() => {
   const h = new Date().getHours();
@@ -208,15 +208,30 @@ const weeklyData = computed(() => {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const today = new Date().getDay();
   const todayIdx = today === 0 ? 6 : today - 1;
+  const dayIndex = {
+    monday: 0,
+    tuesday: 1,
+    wednesday: 2,
+    thursday: 3,
+    friday: 4,
+    saturday: 5,
+    sunday: 6,
+  };
 
   const totals = new Array(7).fill(0);
   history.value.forEach((item) => {
-    if (!item?.date) return;
-    const d = new Date(item.date);
-    if (Number.isNaN(d.getTime())) return;
-    const dow = d.getDay();
-    const idx = dow === 0 ? 6 : dow - 1;
-    totals[idx] += parseFloat(item.emissions_kg) || 0;
+    const rawDate = item?.date || item?.day;
+    if (!rawDate) return;
+
+    let idx = dayIndex[String(rawDate).toLowerCase()];
+    if (idx === undefined) {
+      const d = new Date(rawDate);
+      if (Number.isNaN(d.getTime())) return;
+      const dow = d.getDay();
+      idx = dow === 0 ? 6 : dow - 1;
+    }
+
+    totals[idx] += parseFloat(item.total_emissions_kg ?? item.emissions_kg) || 0;
   });
 
   return days.map((label, i) => ({ label, value: totals[i], isToday: i === todayIdx }));
@@ -241,18 +256,30 @@ function medal(i) {
 
 onMounted(async () => {
   const results = await Promise.allSettled([
+    getDashboard(),
     getTodayLogs(),
     getHistory(),
     getGoal(),
     getChallenges(),
-    client.get("/api/leaderboard"),
+    getLeaderboard(),
   ]);
 
-  if (results[0].status === "fulfilled") todayActivities.value = results[0].value.data ?? [];
-  if (results[1].status === "fulfilled") history.value = results[1].value.data ?? [];
-  if (results[2].status === "fulfilled") goal.value = results[2].value.data ?? null;
-  if (results[3].status === "fulfilled") challenges.value = results[3].value.data ?? [];
-  if (results[4].status === "fulfilled") leaderboard.value = results[4].value.data?.leaderboard ?? [];
+  if (results[0].status === "fulfilled") dashboard.value = results[0].value.data ?? null;
+  if (results[1].status === "fulfilled") todayActivities.value = results[1].value.data ?? [];
+  if (results[2].status === "fulfilled") history.value = results[2].value.data ?? [];
+  if (results[3].status === "fulfilled") {
+    const data = results[3].value.data;
+    goal.value = data?.current_goal ? data : null;
+  }
+  if (results[4].status === "fulfilled") challenges.value = results[4].value.data ?? [];
+  if (results[5].status === "fulfilled") leaderboard.value = results[5].value.data?.leaderboard ?? [];
+
+  if (dashboard.value?.charts?.weekly_history_graph?.length && !history.value.length) {
+    history.value = dashboard.value.charts.weekly_history_graph.map((row) => ({
+      day: row.day,
+      total_emissions_kg: row.emissions_kg,
+    }));
+  }
 });
 </script>
 
@@ -296,7 +323,7 @@ onMounted(async () => {
 .stat-value{
   font-size:27px;
   font-weight:800;
-  color:#fff;
+  color:var(--forest);
   line-height:1;
   letter-spacing:-0.02em;
 }
@@ -364,8 +391,8 @@ onMounted(async () => {
 .bar-val{ font-size:9px; color:var(--text-faint); }
 .bar{ width:100%; border-radius:6px 6px 0 0; transition:height .5s var(--ease), background var(--fast) var(--ease); }
 .bar-today{ background:var(--forest); }
-.bar-past{ background:rgba(52,211,153,0.22); }
-.bar-past:hover{ background:rgba(52,211,153,0.45); }
+.bar-past{ background:var(--moss-soft); }
+.bar-past:hover{ background:var(--moss); }
 .bar-day{ font-size:9px; color:var(--text-faint); }
 .bar-day-today{ color:var(--forest); font-weight:700; }
 .chart-footer{

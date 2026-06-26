@@ -48,6 +48,7 @@ JWT_SECRET=your_generated_secret
 ```bash
 mysql -u root greenstep_api < sql/greenstep.sql
 ```
+This schema also loads demo data used by the frontend.
 
 **Step 8** — Start the server:
 ```bash
@@ -66,6 +67,12 @@ Register and login to get a token:
 ```http
 POST /auth/register
 POST /auth/login
+```
+
+Seeded demo login:
+```text
+Email: you@greenstep.app
+Password: password
 ```
 
 Include the token in all protected requests:
@@ -90,7 +97,7 @@ Authorization: Bearer <your_token>
 |--------|----------|-------------|
 | GET | `/auth/me` | Get current user |
 | GET | `/api/dashboard` | Get dashboard summary |
-| GET/POST | `/api/activities/today` | Today's logs |
+| GET | `/api/activities/today` | Today's logs |
 | GET | `/api/activities/history` | Activity history |
 | POST | `/api/activities/log` | Log an activity |
 | GET/POST | `/api/challenges` | Get or create challenges |

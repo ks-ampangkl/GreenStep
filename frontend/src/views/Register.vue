@@ -8,7 +8,7 @@
       <p class="auth-sub">Start logging activity and cutting your footprint.</p>
 
       <div v-if="error" class="error-banner">{{ error }}</div>
-      <div v-if="success" class="field" style="background:var(--color-moss-soft); color:var(--color-forest); border-radius:8px; padding:10px 14px; font-size:13px;">
+      <div v-if="success" class="success-banner">
         Account created — you can log in now.
       </div>
 
@@ -38,6 +38,7 @@
 <script setup>
 import { ref } from "vue";
 import { register } from "../api/auth";
+import { apiErrorMessage } from "../api/client";
 
 const name = ref("");
 const email = ref("");
@@ -52,7 +53,7 @@ async function submit() {
     await register({ name: name.value, email: email.value, password: password.value });
     success.value = true;
   } catch (err) {
-    error.value = err.response?.data?.error || "Couldn't create your account. Try again.";
+    error.value = apiErrorMessage(err, "Couldn't create your account. Try again.");
   }
 }
 </script>

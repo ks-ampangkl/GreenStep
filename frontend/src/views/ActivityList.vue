@@ -10,11 +10,14 @@
     </router-link>
   </div>
 
-  <div v-if="activities.length">
+  <div v-if="error" class="error-banner">{{ error }}</div>
+  <div v-if="loading" class="loading-state">Loading today’s activity...</div>
+
+  <div v-else-if="activities.length">
     <div v-for="a in activities" :key="a.id" class="card card-row">
       <div>
         <h3>{{ a.activity }}</h3>
-        <span class="tag">{{ a.amount }}</span>
+        <span class="tag">{{ a.amount }} {{ a.unit }}</span>
       </div>
       <div class="mono" style="font-size:18px; color: var(--color-clay); font-weight:600; white-space:nowrap;">
         {{ a.emissions_kg }} kg
@@ -31,11 +34,20 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { getTodayLogs } from "../api/activity";
+import { apiErrorMessage } from "../api/client";
 
 const activities = ref([]);
+const loading = ref(true);
+const error = ref("");
 
 onMounted(async () => {
-  const res = await getTodayLogs();
-  activities.value = res.data;
+  try {
+    const res = await getTodayLogs();
+    activities.value = res.data ?? [];
+  } catch (err) {
+    error.value = apiErrorMessage(err, "Could not load today’s activities.");
+  } finally {
+    loading.value = false;
+  }
 });
 </script>

@@ -2,11 +2,13 @@
 import client from "./client";
 
 
-export const getChallenges=()=>{
+export const getChallenges=(filter = "all")=>{
 
 return client.get(
 
-"/api/challenges"
+"/api/challenges",
+
+{ params: { filter } }
 
 );
 

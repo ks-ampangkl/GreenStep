@@ -30,9 +30,11 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { login } from "../api/auth";
+import { apiErrorMessage } from "../api/client";
 
+const route = useRoute();
 const router = useRouter();
 
 const email = ref("");
@@ -44,9 +46,9 @@ async function submit() {
   try {
     const res = await login({ email: email.value, password: password.value });
     localStorage.setItem("token", res.data.access_token);
-    router.push("/");
+    router.push(route.query.redirect?.toString() || "/");
   } catch (err) {
-    error.value = err.response?.data?.error || "Something went wrong. Try again.";
+    error.value = apiErrorMessage(err, "Something went wrong. Try again.");
   }
 }
 </script>

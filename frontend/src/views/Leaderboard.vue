@@ -2,7 +2,10 @@
   <h1>Leaderboard</h1>
   <p class="page-subtitle">Ranked by total eco points this season.</p>
 
-  <table v-if="users.length">
+  <div v-if="error" class="error-banner">{{ error }}</div>
+  <div v-if="loading" class="loading-state">Loading leaderboard...</div>
+
+  <table v-else-if="users.length">
     <tr>
       <th>Rank</th>
       <th>Name</th>
@@ -28,9 +31,12 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import client from "../api/client";
+import { getLeaderboard } from "../api/activity";
+import { apiErrorMessage } from "../api/client";
 
 const users = ref([]);
+const loading = ref(true);
+const error = ref("");
 
 function initials(name) {
   return (name || "")
@@ -46,7 +52,13 @@ function medal(i) {
 }
 
 onMounted(async () => {
-  const res = await client.get("/api/leaderboard");
-  users.value = res.data.leaderboard;
+  try {
+    const res = await getLeaderboard();
+    users.value = res.data.leaderboard ?? [];
+  } catch (err) {
+    error.value = apiErrorMessage(err, "Could not load the leaderboard.");
+  } finally {
+    loading.value = false;
+  }
 });
 </script>

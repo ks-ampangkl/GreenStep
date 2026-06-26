@@ -1,81 +1,126 @@
 <template>
-  <nav class="navbar">
-    <div class="navbar-spacer"></div>
-
-    <div class="navbar-right">
-      <button class="navbar-icon-btn" aria-label="Notifications">🔔</button>
-      <button class="navbar-logout" @click="logout">
-        Logout
-        <svg viewBox="0 0 20 20" width="13" height="13" fill="none">
-          <path d="M7 4H4.5A1.5 1.5 0 0 0 3 5.5v9A1.5 1.5 0 0 0 4.5 16H7M13 13l4-3-4-3M17 10H7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+  <header class="navbar">
+    <div class="navbar-title">
+      <span class="eyebrow">Carbon tracker</span>
     </div>
-  </nav>
+
+    <div class="navbar-actions">
+      <router-link to="/activities/log" class="btn btn-sm">
+        <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Log Activity
+      </router-link>
+      <button class="btn-ghost btn-sm" :disabled="resetting" @click="resetData">
+        {{ resetting ? "Resetting..." : "Reset Demo" }}
+      </button>
+      <button class="btn-ghost btn-sm" @click="logout">Log out</button>
+      <div class="navbar-avatar" :title="user?.name || 'GreenStep user'">{{ initials(user?.name) }}</div>
+    </div>
+  </header>
 </template>
 
 <script setup>
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { me } from "../api/auth";
+import { resetDemoData } from "../api/activity";
 
 const router = useRouter();
+const user = ref(null);
+const resetting = ref(false);
+
+function initials(name) {
+  return (name || "GreenStep")
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 function logout() {
   localStorage.removeItem("token");
   router.push("/login");
 }
+
+async function resetData() {
+  resetting.value = true;
+  try {
+    await resetDemoData();
+    router.go(0);
+  } finally {
+    resetting.value = false;
+  }
+}
+
+onMounted(async () => {
+  try {
+    const res = await me();
+    user.value = res.data;
+  } catch {
+    user.value = null;
+  }
+});
 </script>
 
-<style>
+<style scoped>
 .navbar{
-  position:sticky;
-  top:0;
-  z-index:40;
+  height:64px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 40px;
-  height:64px;
-  background:rgba(10,15,10,0.85);
-  backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--border-soft);
+  padding:0 32px;
+  background:var(--bg-raised);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:40;
 }
-.navbar-right{
+
+.navbar-title .eyebrow{
+  margin:0;
+  background:transparent;
+  padding:0;
+}
+
+.navbar-actions{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
 }
-.navbar-icon-btn{
+
+.navbar-avatar{
   width:34px;
   height:34px;
-  border-radius:var(--r-sm);
-  background:transparent;
-  border:none;
-  font-size:14px;
-  cursor:pointer;
+  border-radius:50%;
+  background:var(--moss-soft);
+  color:var(--forest);
   display:flex;
   align-items:center;
   justify-content:center;
-  transition:background var(--fast) var(--ease);
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:13px;
+  margin-left:4px;
 }
-.navbar-icon-btn:hover{ background:var(--moss-soft); }
 
-.navbar-logout{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--text-muted);
-  border-radius:var(--r-sm);
-  padding:8px 14px;
-  font-size:12.5px;
-  font-weight:600;
-  cursor:pointer;
-  transition:all var(--fast) var(--ease);
-}
-.navbar-logout:hover{
-  border-color:rgba(251,113,133,0.3);
-  color:var(--rose);
-  background:var(--rose-soft);
+@media (max-width:720px){
+  .navbar{
+    padding:0 16px;
+    gap:12px;
+  }
+
+  .navbar-title{ display:none; }
+
+  .navbar-actions{
+    width:100%;
+    justify-content:flex-end;
+    gap:6px;
+  }
+
+  .navbar-actions .btn,
+  .navbar-actions button{
+    padding:8px 10px;
+    font-size:12px;
+  }
 }
 </style>
